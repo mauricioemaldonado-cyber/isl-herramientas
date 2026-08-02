@@ -502,7 +502,7 @@ function fmtFecha(val){
   if(!isNaN(n)&&n>1000){const d=new Date(Date.UTC(1899,11,30)+n*86400000);return d.toLocaleDateString("es-AR",{day:"2-digit",month:"2-digit",year:"numeric"});}
   return val;
 }
-function rowsToObj(rows){if(!rows.length)return[];const[head,...data]=rows;return data.map(r=>Object.fromEntries(head.map((k,i)=>[k,r[i]||""])));}
+function rowsToObj(rows){if(!rows.length)return[];const[head,...data]=rows;return data.filter(r=>r[0]&&r[0].toString().trim()!=="").map(r=>Object.fromEntries(head.map((k,i)=>[k,r[i]||""])));}
 function toast(msg,tipo="ok"){const wrap=document.getElementById("toasts");const el=document.createElement("div");el.className=`toast ${tipo}`;el.textContent=msg;wrap.appendChild(el);setTimeout(()=>el.remove(),3500);}
 function estadoBadge(e){const m={"Operativa":"b-verde","Entregada-Acta":"b-azul","Pendiente diagnóstico":"b-naranja","En reparación-Almacén":"b-naranja","En espera — sin reparar":"b-amarillo","En service externo":"b-naranja","En tránsito":"b-gris","Baja":"b-rojo","Devuelta a proveedor":"b-rojo"};return`<span class="badge ${m[e]||"b-gris"}">${e||"—"}</span>`;}
 function diasHastaMtto(p){if(!p)return null;const parts=p.split("/");if(parts.length!==3)return null;const f=new Date(`${parts[2]}-${parts[1]}-${parts[0]}`);return Math.ceil((f-new Date())/(1000*60*60*24));}
