@@ -464,19 +464,14 @@ let S = {
 
 // API via Apps Script
 async function shGet(range) {
-  return new Promise(function(resolve, reject) {
-    var cbName = "cb" + Date.now();
-    var script = document.createElement("script");
-    script.src = APPS_SCRIPT_URL + "?range=" + encodeURIComponent(range) + "&callback=" + cbName;
-    window[cbName] = function(d) {
-      delete window[cbName];
-      document.body.removeChild(script);
-      if (!d.ok) reject(new Error(d.error || "Error Apps Script"));
-      else resolve(d.values || []);
-    };
-    script.onerror = function() { reject(new Error("Error de red")); };
-    document.body.appendChild(script);
+  const r = await fetch(APPS_SCRIPT_URL + "?range=" + encodeURIComponent(range), {
+    redirect: "follow",
+    mode: "cors"
   });
+  if (!r.ok) throw new Error("GET " + r.status);
+  const d = await r.json();
+  if (!d.ok) throw new Error(d.error || "Error Apps Script");
+  return d.values || [];
 }
 async function shApp(sheet, values) {
   const r = await fetch(APPS_SCRIPT_URL, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"append",sheet:sheet,values:values})});
@@ -1037,19 +1032,14 @@ function bindEvents(){
 var mHer = [], mTipo = "", mCod = "", mReps = [];
 
 async function mShGet(range) {
-  return new Promise(function(resolve, reject) {
-    var cbName = "cb" + Date.now() + "m";
-    var script = document.createElement("script");
-    script.src = APPS_SCRIPT_URL + "?range=" + encodeURIComponent(range) + "&callback=" + cbName;
-    window[cbName] = function(d) {
-      delete window[cbName];
-      document.body.removeChild(script);
-      if (!d.ok) reject(new Error(d.error || "Error"));
-      else resolve(d.values || []);
-    };
-    script.onerror = function() { reject(new Error("Error de red")); };
-    document.body.appendChild(script);
+  var r = await fetch(APPS_SCRIPT_URL + "?range=" + encodeURIComponent(range), {
+    redirect: "follow",
+    mode: "cors"
   });
+  if (!r.ok) throw new Error("GET " + r.status);
+  var d = await r.json();
+  if (!d.ok) throw new Error(d.error || "Error");
+  return d.values || [];
 }
 async function mShApp(sheet, values) {
   var r = await fetch(APPS_SCRIPT_URL, {method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({action:"append",sheet:sheet,values:values})});
