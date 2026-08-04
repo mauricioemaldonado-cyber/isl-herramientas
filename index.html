@@ -1033,6 +1033,26 @@ function bindEvents(){
 // ===== MÓDULO MANTENIMIENTO =====
 var mHer = [], mTipo = "", mCod = "", mReps = [];
 
+function mFmtFecha(val) {
+  if (!val) return "—";
+  if (typeof val === "string" && val.includes("T")) {
+    // ISO format: 2026-08-03T03:00:00.000Z
+    var d = new Date(val);
+    return d.toLocaleDateString("es-AR", {day:"2-digit",month:"2-digit",year:"numeric"});
+  }
+  if (typeof val === "string" && val.includes("/")) return val;
+  if (typeof val === "string" && val.includes("-")) {
+    var parts = val.split("-");
+    return parts[2] + "/" + parts[1] + "/" + parts[0];
+  }
+  var n = Number(val);
+  if (!isNaN(n) && n > 1000) {
+    var d = new Date(Date.UTC(1899,11,30) + n*86400000);
+    return d.toLocaleDateString("es-AR", {day:"2-digit",month:"2-digit",year:"numeric"});
+  }
+  return val;
+}
+
 async function mShGet(range) {
   var r = await fetch(APPS_SCRIPT_URL + "?range=" + encodeURIComponent(range), {
     redirect: "follow",
@@ -1268,7 +1288,7 @@ async function mCargarHistorial() {
     var items=rows.slice(1).filter(function(r){return r[0]&&r[0].toString().trim()!=="";}).map(function(r){return Object.fromEntries(head.map(function(k,i){return [k,r[i]||""];}));}).reverse().slice(0,20);
     el.innerHTML="<table><tr><th>Fecha</th><th>Herramienta</th><th>Tipo</th><th>Estado</th><th>Diagnostico</th><th>Costo</th></tr>"+
       items.map(function(m){
-        return "<tr><td style='white-space:nowrap;font-size:11px'>"+(m.FechaInicio||"—")+"</td>"+
+        return "<tr><td style='white-space:nowrap;font-size:11px'>"+mFmtFecha(m.FechaInicio||"")+"</td>"+
           "<td><strong>"+m.CodigoHerramienta+"</strong></td>"+
           "<td><span class='badge "+(m.Tipo==="Externo"?"b-azul":m.Tipo==="Interno"?"b-gris":"b-amarillo")+"'>"+( m.Tipo||"—")+"</span></td>"+
           "<td style='font-size:11px'>"+(m.EstadoReparacion||"—")+"</td>"+
@@ -1285,8 +1305,11 @@ function initMtto() {
   if(wrap&&tmpl) wrap.innerHTML=tmpl.innerHTML;
   ["paso2-interna","paso2-externa","paso2-espera","paso3"].forEach(mHide);
   mShow("paso1");
-  mCargarHer();
-  mCargarHistorial();
+  // Pequeño delay para asegurar que el DOM está listo
+  setTimeout(function() {
+    mCargarHer();
+    mCargarHistorial();
+  }, 100);
 }
 // ===== FIN MODULO MANTENIMIENTO =====
 
