@@ -891,7 +891,7 @@ async function guardarHerramienta(){
   try{
     await shApp("Herramientas",[[uid(),codigo,desc,cat,document.getElementById("m-marca").value,document.getElementById("m-modelo").value,document.getElementById("m-serie").value,document.getElementById("m-ten").value,monto||"",hoy(),nodoIni,"Operativa",HYS_CATS.includes(cat)?"SI":"NO",(cat==="Instrumento"||cat==="Equipo especial")?"SI":"NO","","","",document.getElementById("m-obs").value,prov,nroFact,fechaFact,tc,valUSD,esEx?"SI":"NO"]]);
     await shApp("Movimientos",[[uid(),hoy(),hora(),"Alta",codigo,desc,"Proveedor",nodoIni,"David Tesido","","","Alta de herramienta"]]);
-    toast(`✓ Herramienta ${codigo} dada de alta`);S.modal=null;await cargarTodo();render();
+    toast(`✓ Herramienta ${codigo} dada de alta`);S.modal=null;await new Promise(r=>setTimeout(r,1500));await cargarTodo();render();
   }catch(e){toast("Error: "+e.message,"err");}
 }
 
@@ -908,7 +908,7 @@ async function guardarMovimiento(){
     await shApp("Movimientos",[[uid(),hoy(),hora(),tipo,herCod,her?.Descripcion||"",her?.NodoActual||"",destino||"",resp,document.getElementById("m-recep").value,document.getElementById("m-nrodoc").value,document.getElementById("m-obs-mov").value]]);
     const idx=S.data.herramientas.findIndex(h=>h.Codigo===herCod);
     if(idx>=0){if(destino)await shUpd(`Herramientas!K${idx+2}`,[[destino]]);if(nuevoEst)await shUpd(`Herramientas!L${idx+2}`,[[nuevoEst]]);}
-    toast("✓ Movimiento registrado");S.modal=null;await cargarTodo();render();
+    toast("✓ Movimiento registrado");S.modal=null;await new Promise(r=>setTimeout(r,1500));await cargarTodo();render();
   }catch(e){toast("Error: "+e.message,"err");}
 }
 
@@ -925,7 +925,7 @@ async function guardarActa(){
     const herIdx=S.data.herramientas.findIndex(h=>h.Codigo===herCod);
     if(herIdx>=0){await shUpd(`Herramientas!L${herIdx+2}`,[["Entregada-Acta"]]);await shUpd(`Herramientas!Q${herIdx+2}`,[[nroActa]]);}
     await shApp("Movimientos",[[uid(),hoy(),hora(),"Entrega a Oficial/Supervisor",herCod,her?.Descripcion||"",her?.NodoActual||"",nom,"David Tesido",nom,nroActa,""]]);
-    toast(`✓ Acta ${nroActa} generada`);S.modal=null;await cargarTodo();render();
+    toast(`✓ Acta ${nroActa} generada`);S.modal=null;await new Promise(r=>setTimeout(r,1500));await cargarTodo();render();
   }catch(e){toast("Error: "+e.message,"err");}
 }
 
@@ -941,7 +941,7 @@ async function guardarHyS(){
     await shApp("ControlHyS",[[uid(),hoy(),obra,tec,herCod,her?.Descripcion||"",pres,seg,document.getElementById("m-obs-hys").value,"SI"]]);
     if(pres==="NO")await shApp("Novedades",[[uid(),hoy(),"Discrepancia H&S",herCod,her?.Descripcion||"",obra,tec,"Control H&S",`No encontrada en ${obra}`,"Pendiente","Abierta",""]]);
     toast(pres==="NO"?"⚠ Control registrado. Alerta generada":"✓ Control H&S registrado",pres==="NO"?"info":"ok");
-    S.modal=null;await cargarTodo();render();
+    S.modal=null;await new Promise(r=>setTimeout(r,1500));await cargarTodo();render();
   }catch(e){toast("Error: "+e.message,"err");}
 }
 
@@ -950,7 +950,7 @@ async function guardarNodo(){
   if(!nom){toast("Ingresá el nombre","err");return;}
   try{
     await shApp("Nodos",[[uid(),nom,document.getElementById("m-tipo-nodo").value,document.getElementById("m-resp-nodo").value,document.getElementById("m-ubic-nodo").value,"SI"]]);
-    toast(`✓ Nodo "${nom}" creado`);S.modal=null;await cargarTodo();render();
+    toast(`✓ Nodo "${nom}" creado`);S.modal=null;await new Promise(r=>setTimeout(r,1500));await cargarTodo();render();
   }catch(e){toast("Error: "+e.message,"err");}
 }
 
@@ -968,7 +968,7 @@ async function guardarConfigMtto(){
     if(idxCfg>=0){await shUpd(`Alertas!A${idxCfg+2}:I${idxCfg+2}`,[fila]);}else{await shApp("Alertas",[fila]);}
     const herIdx=S.data.herramientas.findIndex(h=>h.Codigo===herCod);
     if(herIdx>=0)await shUpd(`Herramientas!P${herIdx+2}`,[[proxMtto]]);
-    toast(`✓ MTTO configurado. Próximo: ${proxMtto}`);S.modal=null;await cargarTodo();render();
+    toast(`✓ MTTO configurado. Próximo: ${proxMtto}`);S.modal=null;await new Promise(r=>setTimeout(r,1500));await cargarTodo();render();
   }catch(e){toast("Error: "+e.message,"err");}
 }
 
