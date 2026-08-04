@@ -828,10 +828,16 @@ function modalActa(){
     <div class="fg span2"><label>Obra *</label><select id="m-obra-acta"><option value="">— Seleccionar —</option>${nodos.map(n=>`<option>${n.Nombre}</option>`).join("")}</select></div>
     <div class="form-section span2">🔧 Herramientas a entregar</div>
     <div class="span2" style="max-height:200px;overflow-y:auto;border:1px solid var(--borde);border-radius:6px;padding:8px" id="her-acta-lista">
-      ${her.map(h=>`<label style="display:flex;align-items:center;gap:8px;padding:5px;border-bottom:1px solid var(--fondo);cursor:pointer">
-        <input type="checkbox" class="her-acta-check" value="${h.Codigo}" data-desc="${h.Descripcion}" data-nodo="${h.NodoActual}">
-        <span style="flex:1;font-size:12px"><b>${h.Codigo}</b> — ${h.Descripcion} <span style="color:var(--txt3)">(${h.NodoActual})</span></span>
-        <span style="font-size:11px;color:var(--txt2);margin-left:8px">Repos. $</span>
+      ${her.map(h=>`<label style="display:flex;align-items:center;gap:8px;padding:6px;border-bottom:1px solid var(--fondo);cursor:pointer">
+        <input type="checkbox" class="her-acta-check" value="${h.Codigo}"
+          data-desc="${h.Descripcion}" data-marca="${h.Marca||""}" data-modelo="${h.Modelo||""}" data-nodo="${h.NodoActual}">
+        <span style="flex:1;font-size:12px">
+          <b>${h.Codigo}</b> — ${h.Descripcion}
+          ${h.Marca?`<span style="color:var(--txt2)"> · ${h.Marca}</span>`:""}
+          ${h.Modelo?`<span style="color:var(--txt3)"> ${h.Modelo}</span>`:""}
+          <span style="color:var(--txt3)"> (${h.NodoActual})</span>
+        </span>
+        <span style="font-size:11px;color:var(--txt2);margin-left:8px;white-space:nowrap">Repos. $</span>
         <input type="number" class="her-acta-valor" placeholder="0" style="width:90px;border:1px solid var(--borde);border-radius:4px;padding:3px 6px;font-size:11px">
       </label>`).join("")}
     </div>
@@ -911,6 +917,8 @@ function imprimirActa(nroActa, receptor, dni, rol, obra, herramientas){
       <td style="padding:6px 8px;border:1px solid #CBD5E1;text-align:center">${i+1}</td>
       <td style="padding:6px 8px;border:1px solid #CBD5E1;font-weight:700">${h.codigo}</td>
       <td style="padding:6px 8px;border:1px solid #CBD5E1">${h.desc}</td>
+      <td style="padding:6px 8px;border:1px solid #CBD5E1">${h.marca||"—"}</td>
+      <td style="padding:6px 8px;border:1px solid #CBD5E1">${h.modelo||"—"}</td>
       <td style="padding:6px 8px;border:1px solid #CBD5E1;text-align:right">$${Number(h.valor||0).toLocaleString("es-AR")}</td>
     </tr>`).join("");
   const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
@@ -951,7 +959,7 @@ function imprimirActa(nroActa, receptor, dni, rol, obra, herramientas){
     <tr><th style="width:40px">N°</th><th style="width:120px">Código</th><th>Descripción</th><th style="width:120px;text-align:right">Valor repos.</th></tr>
     ${filas}
     <tr class="total-row">
-      <td colspan="3" style="text-align:right">TOTAL VALOR DE REPOSICIÓN</td>
+      <td colspan="5" style="text-align:right">TOTAL VALOR DE REPOSICIÓN</td>
       <td style="text-align:right">$${totalValor.toLocaleString("es-AR")}</td>
     </tr>
   </table>
@@ -1058,7 +1066,7 @@ async function guardarActa(){
   const herSel=[];
   checks.forEach((ch,i)=>{
     const valor=ch.parentElement.querySelector(".her-acta-valor")?.value||"0";
-    herSel.push({codigo:ch.value, desc:ch.dataset.desc, nodo:ch.dataset.nodo, valor:valor});
+    herSel.push({codigo:ch.value, desc:ch.dataset.desc, marca:ch.dataset.marca||"", modelo:ch.dataset.modelo||"", nodo:ch.dataset.nodo, valor:valor});
   });
   const nroActa=`ISL-AE-${String(S.data.actas.length+1).padStart(4,"0")}`;
   const leg=document.getElementById("m-rec-leg").value;
@@ -1152,7 +1160,10 @@ function bindEvents(){
     const filas=S.data.actas.filter(a=>a.NroActa===nroActa);
     if(!filas.length)return;
     const f=filas[0];
-    const hers=filas.map(a=>({codigo:a.CodigoHerramienta,desc:a.Descripcion,valor:a.ValorReposicion}));
+    const hers=filas.map(a=>{
+      const her=S.data.herramientas.find(h=>h.Codigo===a.CodigoHerramienta)||{};
+      return {codigo:a.CodigoHerramienta,desc:a.Descripcion,marca:her.Marca||"",modelo:her.Modelo||"",valor:a.ValorReposicion};
+    });
     imprimirActa(nroActa,f.ReceptorNombre,f.ReceptorDNI,f.ReceptorRol,f.Obra,hers);
   }));
   document.querySelectorAll("[data-acta-dev]").forEach(b=>b.addEventListener("click",()=>{
