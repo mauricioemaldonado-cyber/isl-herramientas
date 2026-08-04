@@ -1265,7 +1265,7 @@ async function mCargarHistorial() {
     var rows=await mShGet("Mantenimiento!A:X");
     if(rows.length<=1){el.innerHTML="<div style='text-align:center;padding:20px'>Sin registros</div>";return;}
     var head=rows[0];
-    var items=rows.slice(1).map(function(r){return Object.fromEntries(head.map(function(k,i){return [k,r[i]||""];}));}).reverse().slice(0,20);
+    var items=rows.slice(1).filter(function(r){return r[0]&&r[0].toString().trim()!=="";}).map(function(r){return Object.fromEntries(head.map(function(k,i){return [k,r[i]||""];}));}).reverse().slice(0,20);
     el.innerHTML="<table><tr><th>Fecha</th><th>Herramienta</th><th>Tipo</th><th>Estado</th><th>Diagnostico</th><th>Costo</th></tr>"+
       items.map(function(m){
         return "<tr><td style='white-space:nowrap;font-size:11px'>"+(m.FechaInicio||"—")+"</td>"+
