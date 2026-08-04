@@ -661,25 +661,56 @@ function renderMovimientos(){
 
 function renderActas(){
   const tab=S.innerTab||"activas";
-  const activas=S.data.actas.filter(a=>!a.FechaDevolucion||a.FechaDevolucion==="");
-  const devueltas=[...S.data.actas.filter(a=>a.FechaDevolucion&&a.FechaDevolucion!=="")].reverse();
+  // Agrupar por NroActa
+  function agruparActas(lista){
+    const map={};
+    lista.forEach(a=>{
+      if(!map[a.NroActa]){
+        map[a.NroActa]={
+          NroActa:a.NroActa, Fecha:a.Fecha, ReceptorNombre:a.ReceptorNombre,
+          ReceptorDNI:a.ReceptorDNI, ReceptorRol:a.ReceptorRol, Obra:a.Obra,
+          EstadoEntrega:a.EstadoEntrega, FechaDevolucion:a.FechaDevolucion,
+          herramientas:[]
+        };
+      }
+      map[a.NroActa].herramientas.push({
+        CodigoHerramienta:a.CodigoHerramienta,
+        Descripcion:a.Descripcion,
+        ValorReposicion:a.ValorReposicion
+      });
+    });
+    return Object.values(map);
+  }
+  const activas=agruparActas(S.data.actas.filter(a=>!a.FechaDevolucion||a.FechaDevolucion===""));
+  const devueltas=agruparActas(S.data.actas.filter(a=>a.FechaDevolucion&&a.FechaDevolucion!==""));
   const lista=tab==="activas"?activas:devueltas;
   const rows=lista.map(a=>`<tr>
-    <td class="td-bold">${a.NroActa}</td><td>${fmtFecha(a.Fecha)}</td>
-    <td>${a.Descripcion}</td><td style="font-weight:700">${a.ReceptorNombre}</td>
+    <td class="td-bold">${a.NroActa}</td>
+    <td>${fmtFecha(a.Fecha)}</td>
+    <td style="font-weight:700">${a.ReceptorNombre}</td>
     <td><span class="badge b-gris">${a.ReceptorRol}</span></td>
-    <td>${a.Obra}</td><td>${fmtARS(a.ValorReposicion)}</td>
-    <td>${a.FechaDevolucion||'<span class="badge b-naranja">Activa</span>'}</td>
+    <td>${a.Obra}</td>
+    <td>${a.herramientas.length} herramienta${a.herramientas.length>1?"s":""}<br>
+      <span style="font-size:10px;color:var(--txt3)">${a.herramientas.map(h=>h.CodigoHerramienta).join(", ")}</span>
+    </td>
+    <td>${fmtARS(a.herramientas.reduce((s,h)=>s+Number(h.ValorReposicion||0),0))}</td>
+    <td>${a.FechaDevolucion?fmtFecha(a.FechaDevolucion):'<span class="badge b-naranja">Activa</span>'}</td>
+    <td style="white-space:nowrap">
+      <button class="btn btn-sec btn-xs" data-acta-print="${a.NroActa}">🖨 PDF</button>
+      ${!a.FechaDevolucion?`<button class="btn btn-rojo btn-xs" data-acta-dev="${a.NroActa}" style="margin-left:3px">Devolver</button>`:""}
+    </td>
   </tr>`).join("");
   return`
-  <div class="section-head"><h2>📋 Actas</h2><button class="btn btn-pri" id="btn-nueva-acta">+ Nueva Acta ISL-AE</button></div>
+  <div class="section-head"><h2>📋 Actas (${activas.length} activas)</h2>
+    <button class="btn btn-pri" id="btn-nueva-acta">+ Nueva Acta ISL-AE</button>
+  </div>
   <div class="inner-tabs">
     <button class="inner-tab ${tab==="activas"?"active":""}" data-inner="activas">📤 Activas (${activas.length})</button>
     <button class="inner-tab ${tab==="devueltas"?"active":""}" data-inner="devueltas">📥 Devueltas (${devueltas.length})</button>
   </div>
   <div class="card"><div class="tabla-wrap"><table>
-    <tr><th>N° Acta</th><th>Fecha</th><th>Herramienta</th><th>Receptor</th><th>Rol</th><th>Obra</th><th>Valor repos.</th><th>Dev.</th></tr>
-    ${lista.length?rows:'<tr><td colspan="8"><div class="empty"><div class="ico">📋</div>Sin actas</div></td></tr>'}
+    <tr><th>N° Acta</th><th>Fecha</th><th>Receptor</th><th>Rol</th><th>Obra</th><th>Herramientas</th><th>Valor repos. total</th><th>Dev.</th><th></th></tr>
+    ${lista.length?rows:'<tr><td colspan="9"><div class="empty"><div class="ico">📋</div>Sin actas</div></td></tr>'}
   </table></div></div>`;
 }
 
@@ -789,15 +820,26 @@ function modalActa(){
   const her=S.data.herramientas.filter(h=>h.Estado==="Operativa");
   const nodos=S.data.nodos.filter(n=>n.Activo!=="NO"&&n.Nombre!=="Almacén ISL");
   return`<div class="form-grid g2">
-    <div class="fg span2"><label>Herramienta *</label><select id="m-her-acta"><option value="">— Seleccionar —</option>${her.map(h=>`<option value="${h.Codigo}">${h.Codigo} — ${h.Descripcion}</option>`).join("")}</select></div>
-    <div class="fg"><label>Receptor — Nombre *</label><input id="m-rec-nom"></div>
+    <div class="form-section span2">👤 Datos del receptor</div>
+    <div class="fg"><label>Nombre completo *</label><input id="m-rec-nom"></div>
     <div class="fg"><label>DNI *</label><input id="m-rec-dni" placeholder="XX.XXX.XXX"></div>
     <div class="fg"><label>Legajo</label><input id="m-rec-leg"></div>
     <div class="fg"><label>Rol</label><select id="m-rec-rol"><option>Oficial</option><option>Supervisor</option><option>Jefe de Obra</option><option>Otro</option></select></div>
-    <div class="fg"><label>Obra *</label><select id="m-obra-acta"><option value="">— Seleccionar —</option>${nodos.map(n=>`<option>${n.Nombre}</option>`).join("")}</select></div>
-    <div class="fg"><label>Valor de reposición ($)</label><input id="m-val-acta" type="number"></div>
+    <div class="fg span2"><label>Obra *</label><select id="m-obra-acta"><option value="">— Seleccionar —</option>${nodos.map(n=>`<option>${n.Nombre}</option>`).join("")}</select></div>
+    <div class="form-section span2">🔧 Herramientas a entregar</div>
+    <div class="span2" style="max-height:200px;overflow-y:auto;border:1px solid var(--borde);border-radius:6px;padding:8px" id="her-acta-lista">
+      ${her.map(h=>`<label style="display:flex;align-items:center;gap:8px;padding:5px;border-bottom:1px solid var(--fondo);cursor:pointer">
+        <input type="checkbox" class="her-acta-check" value="${h.Codigo}" data-desc="${h.Descripcion}" data-nodo="${h.NodoActual}">
+        <span style="flex:1;font-size:12px"><b>${h.Codigo}</b> — ${h.Descripcion} <span style="color:var(--txt3)">(${h.NodoActual})</span></span>
+        <span style="font-size:11px;color:var(--txt2);margin-left:8px">Repos. $</span>
+        <input type="number" class="her-acta-valor" placeholder="0" style="width:90px;border:1px solid var(--borde);border-radius:4px;padding:3px 6px;font-size:11px">
+      </label>`).join("")}
+    </div>
     <div class="fg span2"><label>Observaciones</label><textarea id="m-obs-acta"></textarea></div>
-    <div class="modal-foot span2"><button class="btn btn-sec" id="modal-close">Cancelar</button><button class="btn btn-pri" id="btn-guardar-acta">Generar Acta ISL-AE</button></div>
+    <div class="modal-foot span2">
+      <button class="btn btn-sec" id="modal-close">Cancelar</button>
+      <button class="btn btn-pri" id="btn-guardar-acta">Generar Acta ISL-AE</button>
+    </div>
   </div>`;
 }
 
@@ -861,6 +903,99 @@ async function fetchTCBNA(fecha){
   }catch{return null;}
 }
 
+// ── IMPRIMIR ACTA PDF ────────────────────────────────────────
+function imprimirActa(nroActa, receptor, dni, rol, obra, herramientas){
+  const totalValor = herramientas.reduce((s,h)=>s+Number(h.valor||0),0);
+  const filas = herramientas.map((h,i)=>`
+    <tr>
+      <td style="padding:6px 8px;border:1px solid #CBD5E1;text-align:center">${i+1}</td>
+      <td style="padding:6px 8px;border:1px solid #CBD5E1;font-weight:700">${h.codigo}</td>
+      <td style="padding:6px 8px;border:1px solid #CBD5E1">${h.desc}</td>
+      <td style="padding:6px 8px;border:1px solid #CBD5E1;text-align:right">$${Number(h.valor||0).toLocaleString("es-AR")}</td>
+    </tr>`).join("");
+  const html=`<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+  <title>Acta ${nroActa}</title>
+  <style>
+    body{font-family:Arial,sans-serif;font-size:11pt;color:#1A3A5C;margin:2cm;}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #C0102E;padding-bottom:12px;margin-bottom:20px;}
+    .logo-txt{font-size:22px;font-weight:900;color:#1A3A5C;letter-spacing:2px;}
+    .logo-sub{font-size:9px;color:#475569;}
+    .nro-acta{text-align:right;font-size:18px;font-weight:800;color:#C0102E;}
+    h1{font-size:14pt;text-align:center;margin:16px 0;color:#1A3A5C;}
+    .datos{background:#F1F5F9;border-radius:6px;padding:12px 16px;margin-bottom:16px;display:grid;grid-template-columns:1fr 1fr;gap:8px;}
+    .dato{font-size:10pt;}.dato .lbl{font-size:8pt;color:#64748B;font-weight:700;text-transform:uppercase;}
+    .dato .val{font-weight:700;color:#0F172A;}
+    table{width:100%;border-collapse:collapse;margin:12px 0;}
+    th{background:#1A3A5C;color:#fff;padding:8px;text-align:left;font-size:10pt;}
+    .total-row td{background:#F1F5F9;font-weight:800;border:1px solid #CBD5E1;padding:6px 8px;}
+    .aviso{background:#FEF3C7;border:1px solid #F59E0B;border-radius:6px;padding:10px;margin:12px 0;font-size:9pt;color:#92400E;}
+    .firmas{display:grid;grid-template-columns:1fr 1fr;gap:40px;margin-top:40px;}
+    .firma-box{text-align:center;}.firma-linea{border-top:1px solid #1A3A5C;margin-top:50px;padding-top:6px;font-size:9pt;}
+    .pie{text-align:center;font-size:8pt;color:#94A3B8;margin-top:20px;border-top:1px solid #E2E8F0;padding-top:8px;}
+    @media print{body{margin:1cm;}}
+  </style></head><body>
+  <div class="header">
+    <div><div class="logo-txt">ISL</div><div class="logo-sub">Instrumental San Lorenzo S.R.L.</div></div>
+    <div class="nro-acta">${nroActa}<br><span style="font-size:10px;color:#475569">Acta de Entrega de Herramientas</span></div>
+  </div>
+  <h1>ACTA DE ENTREGA DE HERRAMIENTAS</h1>
+  <div class="datos">
+    <div class="dato"><div class="lbl">Receptor</div><div class="val">${receptor}</div></div>
+    <div class="dato"><div class="lbl">DNI</div><div class="val">${dni}</div></div>
+    <div class="dato"><div class="lbl">Rol</div><div class="val">${rol}</div></div>
+    <div class="dato"><div class="lbl">Obra / Destino</div><div class="val">${obra}</div></div>
+    <div class="dato"><div class="lbl">Fecha de entrega</div><div class="val">${new Date().toLocaleDateString("es-AR")}</div></div>
+    <div class="dato"><div class="lbl">Gestor</div><div class="val">David Tesido</div></div>
+  </div>
+  <table>
+    <tr><th style="width:40px">N°</th><th style="width:120px">Código</th><th>Descripción</th><th style="width:120px;text-align:right">Valor repos.</th></tr>
+    ${filas}
+    <tr class="total-row">
+      <td colspan="3" style="text-align:right">TOTAL VALOR DE REPOSICIÓN</td>
+      <td style="text-align:right">$${totalValor.toLocaleString("es-AR")}</td>
+    </tr>
+  </table>
+  <div class="aviso">
+    ⚠ El valor de reposición es referencial. La presente acta documenta la entrega de las herramientas 
+    al receptor indicado, quien asume la responsabilidad de su custodia y conservación.
+  </div>
+  <div class="firmas">
+    <div class="firma-box"><div class="firma-linea">Firma Receptor<br><b>${receptor}</b><br>DNI: ${dni}</div></div>
+    <div class="firma-box"><div class="firma-linea">Firma Gestor<br><b>David Tesido</b><br>Gestor de Herramientas</div></div>
+  </div>
+  <div class="pie">Instrumental San Lorenzo S.R.L. · ${nroActa} · Documento interno ISL</div>
+  <script>window.onload=()=>{window.print();}<\/script>
+  </body></html>`;
+  const win=window.open("","_blank");
+  win.document.write(html);
+  win.document.close();
+}
+
+// ── DEVOLVER ACTA ─────────────────────────────────────────────
+async function devolverActa(nroActa){
+  if(!confirm(`¿Confirmar devolución completa del ${nroActa}?`))return;
+  const filas=S.data.actas.map((a,i)=>({...a,idx:i})).filter(a=>a.NroActa===nroActa);
+  if(!filas.length){toast("Acta no encontrada","err");return;}
+  try{
+    for(const a of filas){
+      // Actualizar FechaDevolucion y EstadoDevolucion en Actas
+      await shUpd(`Actas!N${a.idx+2}`,[[hoy()]]);
+      await shUpd(`Actas!O${a.idx+2}`,[["Devuelta"]]);
+      // Cambiar estado herramienta a Operativa
+      const herIdx=S.data.herramientas.findIndex(h=>h.Codigo===a.CodigoHerramienta);
+      if(herIdx>=0){
+        await shUpd(`Herramientas!L${herIdx+2}`,[["Operativa"]]);
+        await shUpd(`Herramientas!Q${herIdx+2}`,[[""]]);
+      }
+      // Registrar movimiento de devolución
+      await shApp("Movimientos",[[uid(),hoy(),hora(),"Devolución Oficial→Pañol",a.CodigoHerramienta,a.Descripcion,a.Obra,"Almacén ISL","David Tesido",a.ReceptorNombre,nroActa,"Devolución acta"]]);
+    }
+    toast(`✓ Devolución registrada — ${filas.length} herramienta${filas.length>1?"s":""}`);
+    await new Promise(r=>setTimeout(r,1500));
+    await cargarTodo();render();
+  }catch(e){toast("Error: "+e.message,"err");}
+}
+
 window.imprimirQR=function(codigo,desc){
   const canvas=document.querySelector("#qr-canvas canvas");if(!canvas)return;
   const dataUrl=canvas.toDataURL("image/png");
@@ -913,19 +1048,40 @@ async function guardarMovimiento(){
 }
 
 async function guardarActa(){
-  const herCod=document.getElementById("m-her-acta").value;
   const nom=document.getElementById("m-rec-nom").value.trim();
   const dni=document.getElementById("m-rec-dni").value.trim();
   const obra=document.getElementById("m-obra-acta").value;
-  if(!herCod||!nom||!dni||!obra){toast("Completá los campos obligatorios","err");return;}
-  const her=S.data.herramientas.find(h=>h.Codigo===herCod);
+  if(!nom||!dni||!obra){toast("Completá los campos obligatorios","err");return;}
+  // Obtener herramientas seleccionadas
+  const checks=document.querySelectorAll(".her-acta-check:checked");
+  if(!checks.length){toast("Seleccioná al menos una herramienta","err");return;}
+  const herSel=[];
+  checks.forEach((ch,i)=>{
+    const valor=ch.parentElement.querySelector(".her-acta-valor")?.value||"0";
+    herSel.push({codigo:ch.value, desc:ch.dataset.desc, nodo:ch.dataset.nodo, valor:valor});
+  });
   const nroActa=`ISL-AE-${String(S.data.actas.length+1).padStart(4,"0")}`;
+  const leg=document.getElementById("m-rec-leg").value;
+  const rol=document.getElementById("m-rec-rol").value;
+  const obs=document.getElementById("m-obs-acta").value;
   try{
-    await shApp("Actas",[[uid(),nroActa,"Entrega",hoy(),herCod,her?.Descripcion||"",nom,dni,document.getElementById("m-rec-leg").value,document.getElementById("m-rec-rol").value,obra,document.getElementById("m-val-acta").value,"Entregada","","",document.getElementById("m-obs-acta").value]]);
-    const herIdx=S.data.herramientas.findIndex(h=>h.Codigo===herCod);
-    if(herIdx>=0){await shUpd(`Herramientas!L${herIdx+2}`,[["Entregada-Acta"]]);await shUpd(`Herramientas!Q${herIdx+2}`,[[nroActa]]);}
-    await shApp("Movimientos",[[uid(),hoy(),hora(),"Entrega a Oficial/Supervisor",herCod,her?.Descripcion||"",her?.NodoActual||"",nom,"David Tesido",nom,nroActa,""]]);
-    toast(`✓ Acta ${nroActa} generada`);S.modal=null;await new Promise(r=>setTimeout(r,1500));await cargarTodo();render();
+    // Una fila por herramienta con el mismo NroActa
+    for(const h of herSel){
+      await shApp("Actas",[[uid(),nroActa,"Entrega",hoy(),h.codigo,h.desc,nom,dni,leg,rol,obra,h.valor,"Entregada","","",obs]]);
+      // Actualizar estado herramienta
+      const idx=S.data.herramientas.findIndex(x=>x.Codigo===h.codigo);
+      if(idx>=0){
+        await shUpd(`Herramientas!L${idx+2}`,[["Entregada-Acta"]]);
+        await shUpd(`Herramientas!Q${idx+2}`,[[nroActa]]);
+      }
+      await shApp("Movimientos",[[uid(),hoy(),hora(),"Entrega a Oficial/Supervisor",h.codigo,h.desc,h.nodo,nom,"David Tesido",nom,nroActa,""]]);
+    }
+    toast(`✓ Acta ${nroActa} generada — ${herSel.length} herramienta${herSel.length>1?"s":""}`);
+    // Imprimir PDF
+    setTimeout(()=>imprimirActa(nroActa,nom,dni,rol,obra,herSel),500);
+    S.modal=null;
+    await new Promise(r=>setTimeout(r,1500));
+    await cargarTodo();render();
   }catch(e){toast("Error: "+e.message,"err");}
 }
 
@@ -990,6 +1146,19 @@ function bindEvents(){
     setTimeout(()=>{const el=document.getElementById("qr-canvas");if(el&&typeof QRCode!=="undefined"){el.innerHTML="";new QRCode(el,{text:[b.dataset.qr,b.dataset.qrDesc,b.dataset.qrMarca,b.dataset.qrEstado].join(" | "),width:180,height:180,colorDark:"#1A3A5C",colorLight:"#ffffff",correctLevel:QRCode.CorrectLevel.M});}},150);
   }));
   document.getElementById("btn-imprimir-qr")?.addEventListener("click",()=>{const d=S.modal?.data;if(d)imprimirQR(d.codigo,d.desc);});
+    // Botones de actas — imprimir y devolver
+  document.querySelectorAll("[data-acta-print]").forEach(b=>b.addEventListener("click",()=>{
+    const nroActa=b.dataset.actaPrint;
+    const filas=S.data.actas.filter(a=>a.NroActa===nroActa);
+    if(!filas.length)return;
+    const f=filas[0];
+    const hers=filas.map(a=>({codigo:a.CodigoHerramienta,desc:a.Descripcion,valor:a.ValorReposicion}));
+    imprimirActa(nroActa,f.ReceptorNombre,f.ReceptorDNI,f.ReceptorRol,f.Obra,hers);
+  }));
+  document.querySelectorAll("[data-acta-dev]").forEach(b=>b.addEventListener("click",()=>{
+    devolverActa(b.dataset.actaDev);
+  }));
+
   document.getElementById("btn-guardar-her")?.addEventListener("click",guardarHerramienta);
   document.getElementById("btn-guardar-mov")?.addEventListener("click",guardarMovimiento);
   document.getElementById("btn-guardar-acta")?.addEventListener("click",guardarActa);
