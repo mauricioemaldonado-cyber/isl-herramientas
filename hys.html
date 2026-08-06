@@ -4,6 +4,13 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
 <title>ISL · Control H&S</title>
+<link rel="manifest" href="manifest-hys.json">
+<link rel="apple-touch-icon" href="isl-icon-192.png">
+<link rel="icon" type="image/png" href="favicon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ISL H&S">
+<meta name="theme-color" content="#1A3A5C">
 <style>
 :root{
   --azul:#1A3A5C;--azul2:#2563A8;--verde:#16A34A;--verdebg:#DCFCE7;
@@ -21,6 +28,7 @@ body{font-family:system-ui,sans-serif;background:var(--fondo);color:var(--txt1);
 .fg{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
 .fg label{font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;}
 .fg input,.fg select{border:1px solid var(--borde);border-radius:8px;padding:10px 12px;font-size:14px;font-family:inherit;background:#fff;width:100%;}
+#sel-her-hys{font-size:13px;padding:12px;min-height:46px;}
 .fg input:focus,.fg select:focus{outline:none;border-color:var(--azul2);}
 .fg .info-box{background:var(--fondo);border-radius:8px;padding:10px 12px;font-size:13px;min-height:38px;}
 .fg .info-box .val{font-weight:700;color:var(--azul);}
@@ -105,8 +113,20 @@ body{font-family:system-ui,sans-serif;background:var(--fondo);color:var(--txt1);
     </div>
     <div class="card">
       <div class="card-title">🔍 Identificar herramienta</div>
+      <!-- Dropdown de herramientas -->
       <div class="fg">
-        <label>Código ISL (o escanear QR)</label>
+        <label>Seleccionar herramienta</label>
+        <select id="sel-her-hys" onchange="seleccionarDeDropdown(this.value)">
+          <option value="">— Cargando herramientas... —</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin:8px 0">
+        <div style="flex:1;height:1px;background:var(--borde)"></div>
+        <span style="font-size:11px;color:var(--txt3);font-weight:600">O INGRESÁ EL CÓDIGO</span>
+        <div style="flex:1;height:1px;background:var(--borde)"></div>
+      </div>
+      <div class="fg">
+        <label>Código ISL manual</label>
         <div style="display:flex;gap:8px">
           <input id="inp-codigo" placeholder="Ej: ISL-ELE-001" style="flex:1" oninput="this.value=this.value.toUpperCase()">
           <button class="btn-buscar" style="width:auto;padding:10px 16px" onclick="buscarHer()">Buscar</button>
@@ -453,6 +473,47 @@ async function shUpd(range, values) {
   return d;
 }
 
+// Cargar dropdown al inicio
+async function cargarDropdown() {
+  try {
+    const rows = await shGet("Herramientas!A:X");
+    if (!rows.length) return;
+    const head = rows[0];
+    const data = rows.slice(1)
+      .filter(r => r[0] && r[0].toString().trim() !== "")
+      .map(r => Object.fromEntries(head.map((k,i) => [k,r[i]||""])))
+      .filter(h => h.Estado !== "Baja" && h.Estado !== "Devuelta a proveedor");
+    // Guardar herramientas en memoria
+    window._todasHer = data;
+    const sel = document.getElementById("sel-her-hys");
+    sel.innerHTML = '<option value="">— Seleccionar herramienta —</option>' +
+      data.map(h => `<option value="${h.Codigo}">${h.Codigo} — ${h.Descripcion}${h.Marca?" ("+h.Marca+")":""}</option>`).join("");
+    toast("Herramientas cargadas: " + data.length);
+  } catch(e) {
+    const sel = document.getElementById("sel-her-hys");
+    sel.innerHTML = '<option value="">Error al cargar — usá el código manual</option>';
+    console.error(e);
+  }
+}
+
+function seleccionarDeDropdown(codigo) {
+  if (!codigo) return;
+  const her = (window._todasHer||[]).find(h => h.Codigo === codigo);
+  if (!her) return;
+  herActual = her;
+  document.getElementById("res-desc").textContent = her.Descripcion || "—";
+  document.getElementById("res-marca").textContent = her.Marca || "—";
+  document.getElementById("res-modelo").textContent = her.Modelo || "—";
+  document.getElementById("res-serie").textContent = her.NroSerie || "—";
+  document.getElementById("res-ubic").textContent = her.NodoActual || "—";
+  document.getElementById("inp-fecha").value = hoy();
+  document.getElementById("inp-codigo").value = codigo;
+  const catMap = {"Eléctrica":"Eléctrica","A batería":"A batería","A explosión":"A explosión","Soldadora":"Eléctrica"};
+  energiaSeleccionada = catMap[her.Categoria] || "";
+  document.getElementById("her-loading").classList.add("hidden");
+  document.getElementById("her-result").classList.remove("hidden");
+}
+
 // Buscar herramienta
 async function buscarHer() {
   const cod = document.getElementById("inp-codigo").value.trim().toUpperCase();
@@ -487,6 +548,9 @@ async function buscarHer() {
 
 // También buscar al presionar Enter
 document.getElementById("inp-codigo").addEventListener("keydown", e => { if(e.key==="Enter") buscarHer(); });
+
+// Cargar dropdown al inicio
+cargarDropdown();
 
 function irPaso2() {
   tecnico = document.getElementById("inp-tecnico").value.trim();
