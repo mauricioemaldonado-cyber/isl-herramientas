@@ -1,0 +1,1031 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0">
+<title>ISL · Control H&S</title>
+<link rel="manifest" href="manifest-hys.json">
+<link rel="apple-touch-icon" href="isl-icon-192.png">
+<link rel="icon" type="image/png" href="favicon.png">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="ISL H&S">
+<meta name="theme-color" content="#1A3A5C">
+<style>
+:root{
+  --azul:#1A3A5C;--azul2:#2563A8;--verde:#16A34A;--verdebg:#DCFCE7;
+  --rojo:#DC2626;--rojobg:#FEE2E2;--amber:#D97706;--amberbg:#FEF3C7;
+  --fondo:#F1F5F9;--card:#fff;--borde:#CBD5E1;--txt1:#0F172A;--txt2:#475569;--txt3:#94A3B8;
+}
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+body{font-family:system-ui,sans-serif;background:var(--fondo);color:var(--txt1);font-size:14px;min-height:100vh;}
+.topbar{background:var(--azul);color:#fff;padding:12px 16px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:10;}
+.topbar img{height:32px;background:#fff;padding:3px 6px;border-radius:4px;}
+.topbar h1{font-size:14px;font-weight:700;}
+.main{padding:16px;max-width:600px;margin:0 auto;}
+.card{background:var(--card);border:1px solid var(--borde);border-radius:12px;padding:16px;margin-bottom:14px;}
+.card-title{font-size:13px;font-weight:700;color:var(--azul);margin-bottom:12px;display:flex;align-items:center;gap:6px;}
+.fg{display:flex;flex-direction:column;gap:4px;margin-bottom:12px;}
+.fg label{font-size:11px;font-weight:700;color:var(--txt2);text-transform:uppercase;}
+.fg input,.fg select{border:1px solid var(--borde);border-radius:8px;padding:10px 12px;font-size:14px;font-family:inherit;background:#fff;width:100%;}
+#sel-her-hys{font-size:13px;padding:12px;min-height:46px;}
+.fg input:focus,.fg select:focus{outline:none;border-color:var(--azul2);}
+.fg .info-box{background:var(--fondo);border-radius:8px;padding:10px 12px;font-size:13px;min-height:38px;}
+.fg .info-box .val{font-weight:700;color:var(--azul);}
+.fg .info-box .sub{font-size:11px;color:var(--txt3);margin-top:2px;}
+.btn-buscar{background:var(--azul2);color:#fff;border:none;border-radius:8px;padding:10px 18px;font-size:14px;font-weight:700;cursor:pointer;width:100%;margin-top:4px;}
+.btn-buscar:active{background:#1D4ED8;}
+
+/* PUNTOS DE CONTROL */
+.punto{border-bottom:1px solid var(--fondo);padding:10px 0;}
+.punto:last-child{border-bottom:none;}
+.punto-header{display:flex;align-items:center;gap:8px;margin-bottom:8px;}
+.punto-num{background:var(--azul);color:#fff;width:24px;height:24px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;flex-shrink:0;}
+.punto-nom{font-size:13px;font-weight:600;color:var(--txt1);flex:1;}
+.opciones{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;margin-bottom:6px;}
+.opcion-btn{border:2px solid var(--borde);background:#fff;border-radius:8px;padding:8px 4px;font-size:11px;font-weight:700;cursor:pointer;text-align:center;transition:all .15s;font-family:inherit;}
+.opcion-btn.ok{border-color:var(--verde);background:var(--verdebg);color:var(--verde);}
+.opcion-btn.mal{border-color:var(--rojo);background:var(--rojobg);color:var(--rojo);}
+.opcion-btn.nc{border-color:var(--txt3);background:var(--fondo);color:var(--txt2);}
+.obs-input{border:1px solid var(--borde);border-radius:6px;padding:7px 10px;font-size:12px;font-family:inherit;width:100%;background:#fff;}
+.obs-input:focus{outline:none;border-color:var(--azul2);}
+
+/* TIPO ENERGIA */
+.energia-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:6px;}
+.energia-btn{border:2px solid var(--borde);background:#fff;border-radius:8px;padding:10px;font-size:12px;font-weight:700;cursor:pointer;text-align:center;font-family:inherit;transition:all .15s;}
+.energia-btn.sel{border-color:var(--azul2);background:var(--azulbg,#EFF6FF);color:var(--azul2);}
+
+/* RESULTADO FINAL */
+.resultado-grid{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-bottom:12px;}
+.res-card{border-radius:8px;padding:12px;text-align:center;border:1px solid var(--borde);}
+.res-card.ok{background:var(--verdebg);border-color:var(--verde);}
+.res-card.mal{background:var(--rojobg);border-color:var(--rojo);}
+.res-card.nc{background:var(--fondo);}
+.res-card .num{font-size:24px;font-weight:800;}
+.res-card .lbl{font-size:10px;font-weight:700;margin-top:2px;}
+.res-card.ok .num,.res-card.ok .lbl{color:var(--verde);}
+.res-card.mal .num,.res-card.mal .lbl{color:var(--rojo);}
+.res-card.nc .num,.res-card.nc .lbl{color:var(--txt2);}
+
+/* BOTONES */
+.btn-guardar{background:var(--verde);color:#fff;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;width:100%;margin-top:8px;}
+.btn-guardar:active{background:#15803D;}
+.btn-nuevo{background:var(--azul2);color:#fff;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;width:100%;margin-top:8px;}
+.btn-pdf{background:var(--amber);color:#fff;border:none;border-radius:10px;padding:14px;font-size:15px;font-weight:700;cursor:pointer;width:100%;margin-top:8px;}
+
+/* TOAST */
+.toast-wrap{position:fixed;bottom:20px;left:50%;transform:translateX(-50%);z-index:100;display:flex;flex-direction:column;gap:8px;width:90%;max-width:400px;}
+.toast{padding:12px 16px;border-radius:10px;font-size:13px;font-weight:600;box-shadow:0 4px 12px #0003;text-align:center;}
+.toast.ok{background:var(--verde);color:#fff;}
+.toast.err{background:var(--rojo);color:#fff;}
+.toast.info{background:var(--azul);color:#fff;}
+
+.hidden{display:none!important;}
+.spinner{width:28px;height:28px;border:3px solid var(--borde);border-top-color:var(--azul2);border-radius:50%;animation:spin .7s linear infinite;margin:0 auto;}
+@keyframes spin{to{transform:rotate(360deg);}}
+.loading-box{text-align:center;padding:20px;color:var(--txt3);}
+
+.estado-ok{color:var(--verde);font-weight:700;}
+.estado-mal{color:var(--rojo);font-weight:700;}
+
+/* PASO INDICATOR */
+.pasos{display:flex;gap:0;margin-bottom:16px;}
+.paso-ind{flex:1;padding:8px;text-align:center;font-size:11px;font-weight:700;color:var(--txt3);border-bottom:3px solid var(--borde);}
+.paso-ind.active{color:var(--azul2);border-bottom-color:var(--azul2);}
+.paso-ind.done{color:var(--verde);border-bottom-color:var(--verde);}
+</style>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/html5-qrcode/2.3.8/html5-qrcode.min.js"></script>
+</head>
+<body>
+
+<div class="topbar" style="flex-direction:column;height:auto;padding:0">
+  <div style="display:flex;align-items:center;gap:10px;padding:12px 16px;width:100%">
+    <img src="data:image/png;base64,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" alt="ISL" style="height:32px;background:#fff;padding:3px 6px;border-radius:4px;">
+    <h1 style="font-size:14px;font-weight:700;flex:1">Control H&amp;S &#8212; Inspecci&oacute;n de Equipos</h1>
+  </div>
+  <div style="display:flex;width:100%;border-top:1px solid rgba(255,255,255,.15)">
+    <button id="tab-inspeccion" style="flex:1;background:rgba(255,255,255,.15);border:none;color:#fff;padding:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border-bottom:2px solid #fff">&#128270; Nueva inspecci&oacute;n</button>
+    <button id="tab-historial" style="flex:1;background:none;border:none;color:rgba(255,255,255,.6);padding:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit;border-bottom:2px solid transparent">&#128203; Mis controles</button>
+  </div>
+</div>
+
+<div id="seccion-inspeccion"><div class="main">
+
+  <!-- PASO 1: Identificar herramienta -->
+  <div id="paso1">
+    <div class="pasos">
+      <div class="paso-ind active" id="ind1">1. Herramienta</div>
+      <div class="paso-ind" id="ind2">2. Inspección</div>
+      <div class="paso-ind" id="ind3">3. Resultado</div>
+    </div>
+    <div class="card">
+      <div class="card-title">🔍 Identificar herramienta</div>
+      <!-- Dropdown de herramientas -->
+      <div class="fg">
+        <label>Seleccionar herramienta</label>
+        <select id="sel-her-hys" onchange="seleccionarDeDropdown(this.value)">
+          <option value="">— Cargando herramientas... —</option>
+        </select>
+      </div>
+      <div style="display:flex;align-items:center;gap:10px;margin:8px 0">
+        <div style="flex:1;height:1px;background:var(--borde)"></div>
+        <span style="font-size:11px;color:var(--txt3);font-weight:600">O INGRESÁ EL CÓDIGO</span>
+        <div style="flex:1;height:1px;background:var(--borde)"></div>
+      </div>
+      <div class="fg">
+        <label>Código ISL manual</label>
+        <div style="display:flex;gap:8px">
+          <input id="inp-codigo" placeholder="Ej: ISL-ELE-001" style="flex:1" oninput="this.value=this.value.toUpperCase()">
+          <button class="btn-buscar" style="width:auto;padding:10px 16px" onclick="buscarHer()">Buscar</button>
+        </div>
+      </div>
+      <div id="her-result" class="hidden">
+        <div class="fg">
+          <label>Equipo / Máquina</label>
+          <div class="info-box"><div class="val" id="res-desc">—</div></div>
+        </div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+          <div class="fg">
+            <label>Marca</label>
+            <div class="info-box"><div class="val" id="res-marca">—</div></div>
+          </div>
+          <div class="fg">
+            <label>Modelo</label>
+            <div class="info-box"><div class="val" id="res-modelo">—</div></div>
+          </div>
+          <div class="fg">
+            <label>N° Serie</label>
+            <div class="info-box"><div class="val" id="res-serie">—</div></div>
+          </div>
+          <div class="fg">
+            <label>Ubicación</label>
+            <div class="info-box"><div class="val" id="res-ubic">—</div></div>
+          </div>
+        </div>
+        <div class="fg" style="margin-top:8px">
+          <label>Técnico H&S *</label>
+          <input id="inp-tecnico" placeholder="Nombre y apellido del técnico">
+        </div>
+        <div class="fg">
+          <label>Fecha de inspección</label>
+          <input type="date" id="inp-fecha">
+        </div>
+        <button class="btn-buscar" onclick="irPaso2()">Continuar → Iniciar inspección</button>
+      </div>
+      <div id="her-loading" class="loading-box hidden">
+        <div class="spinner"></div>
+        <div style="margin-top:8px">Buscando herramienta...</div>
+      </div>
+    </div>
+  </div>
+
+  <!-- PASO 2: Checklist -->
+  <div id="paso2" class="hidden">
+    <div class="pasos">
+      <div class="paso-ind done" id="ind1b">1. Herramienta</div>
+      <div class="paso-ind active" id="ind2b">2. Inspección</div>
+      <div class="paso-ind" id="ind3b">3. Resultado</div>
+    </div>
+    <div class="card" id="her-info-card" style="background:#EFF6FF;border-color:#BFDBFE;margin-bottom:14px">
+      <div style="font-size:13px">
+        <div style="font-weight:800;color:var(--azul)" id="p2-codigo"></div>
+        <div style="color:var(--txt2);margin-top:2px" id="p2-desc"></div>
+        <div style="font-size:11px;color:var(--txt3);margin-top:2px" id="p2-detalle"></div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">📋 Puntos de control</div>
+
+      <div class="punto" id="punto-1">
+        <div class="punto-header">
+          <div class="punto-num">1</div>
+          <div class="punto-nom">Carcasa / Cuerpo</div>
+        </div>
+        <div class="opciones">
+          <button class="opcion-btn" onclick="selOpcion(1,'ok',this)">✅ Correcto</button>
+          <button class="opcion-btn" onclick="selOpcion(1,'mal',this)">❌ Incorrecto</button>
+          <button class="opcion-btn" onclick="selOpcion(1,'nc',this)">— N/C</button>
+        </div>
+        <input class="obs-input hidden" id="obs-1" placeholder="Observaciones...">
+      </div>
+
+      <div class="punto" id="punto-2">
+        <div class="punto-header">
+          <div class="punto-num">2</div>
+          <div class="punto-nom">Ficha Tomacorriente / Batería</div>
+        </div>
+        <div class="opciones">
+          <button class="opcion-btn" onclick="selOpcion(2,'ok',this)">✅ Correcto</button>
+          <button class="opcion-btn" onclick="selOpcion(2,'mal',this)">❌ Incorrecto</button>
+          <button class="opcion-btn" onclick="selOpcion(2,'nc',this)">— N/C</button>
+        </div>
+        <input class="obs-input hidden" id="obs-2" placeholder="Observaciones...">
+      </div>
+
+      <div class="punto" id="punto-3">
+        <div class="punto-header">
+          <div class="punto-num">3</div>
+          <div class="punto-nom">Cable aislado</div>
+        </div>
+        <div class="opciones">
+          <button class="opcion-btn" onclick="selOpcion(3,'ok',this)">✅ Correcto</button>
+          <button class="opcion-btn" onclick="selOpcion(3,'mal',this)">❌ Incorrecto</button>
+          <button class="opcion-btn" onclick="selOpcion(3,'nc',this)">— N/C</button>
+        </div>
+        <input class="obs-input hidden" id="obs-3" placeholder="Observaciones...">
+      </div>
+
+      <div class="punto" id="punto-4">
+        <div class="punto-header">
+          <div class="punto-num">4</div>
+          <div class="punto-nom">Mandos / Accionamiento</div>
+        </div>
+        <div class="opciones">
+          <button class="opcion-btn" onclick="selOpcion(4,'ok',this)">✅ Correcto</button>
+          <button class="opcion-btn" onclick="selOpcion(4,'mal',this)">❌ Incorrecto</button>
+          <button class="opcion-btn" onclick="selOpcion(4,'nc',this)">— N/C</button>
+        </div>
+        <input class="obs-input hidden" id="obs-4" placeholder="Observaciones...">
+      </div>
+
+      <div class="punto" id="punto-5">
+        <div class="punto-header">
+          <div class="punto-num">5</div>
+          <div class="punto-nom">Mango</div>
+        </div>
+        <div class="opciones">
+          <button class="opcion-btn" onclick="selOpcion(5,'ok',this)">✅ Correcto</button>
+          <button class="opcion-btn" onclick="selOpcion(5,'mal',this)">❌ Incorrecto</button>
+          <button class="opcion-btn" onclick="selOpcion(5,'nc',this)">— N/C</button>
+        </div>
+        <input class="obs-input hidden" id="obs-5" placeholder="Observaciones...">
+      </div>
+
+      <div class="punto" id="punto-6">
+        <div class="punto-header">
+          <div class="punto-num">6</div>
+          <div class="punto-nom">Sistema Hombre Muerto</div>
+        </div>
+        <div class="opciones">
+          <button class="opcion-btn" onclick="selOpcion(6,'ok',this)">✅ Correcto</button>
+          <button class="opcion-btn" onclick="selOpcion(6,'mal',this)">❌ Incorrecto</button>
+          <button class="opcion-btn" onclick="selOpcion(6,'nc',this)">— N/C</button>
+        </div>
+        <input class="obs-input hidden" id="obs-6" placeholder="Observaciones...">
+      </div>
+
+      <div class="punto" id="punto-7">
+        <div class="punto-header">
+          <div class="punto-num">7</div>
+          <div class="punto-nom">Empuñadura</div>
+        </div>
+        <div class="opciones">
+          <button class="opcion-btn" onclick="selOpcion(7,'ok',this)">✅ Correcto</button>
+          <button class="opcion-btn" onclick="selOpcion(7,'mal',this)">❌ Incorrecto</button>
+          <button class="opcion-btn" onclick="selOpcion(7,'nc',this)">— N/C</button>
+        </div>
+        <input class="obs-input hidden" id="obs-7" placeholder="Observaciones...">
+      </div>
+
+      <div class="punto" id="punto-8">
+        <div class="punto-header">
+          <div class="punto-num">8</div>
+          <div class="punto-nom">Resguardo / Protección</div>
+        </div>
+        <div class="opciones">
+          <button class="opcion-btn" onclick="selOpcion(8,'ok',this)">✅ Correcto</button>
+          <button class="opcion-btn" onclick="selOpcion(8,'mal',this)">❌ Incorrecto</button>
+          <button class="opcion-btn" onclick="selOpcion(8,'nc',this)">— N/C</button>
+        </div>
+        <input class="obs-input hidden" id="obs-8" placeholder="Observaciones...">
+      </div>
+
+      <div class="punto" id="punto-9">
+        <div class="punto-header">
+          <div class="punto-num">9</div>
+          <div class="punto-nom">Funcionalidad</div>
+        </div>
+        <div class="opciones">
+          <button class="opcion-btn" onclick="selOpcion(9,'ok',this)">✅ Correcto</button>
+          <button class="opcion-btn" onclick="selOpcion(9,'mal',this)">❌ Incorrecto</button>
+          <button class="opcion-btn" onclick="selOpcion(9,'nc',this)">— N/C</button>
+        </div>
+        <input class="obs-input hidden" id="obs-9" placeholder="Observaciones...">
+      </div>
+
+      <div class="punto" id="punto-10">
+        <div class="punto-header">
+          <div class="punto-num">10</div>
+          <div class="punto-nom">Llave de ajuste</div>
+        </div>
+        <div class="opciones">
+          <button class="opcion-btn" onclick="selOpcion(10,'ok',this)">✅ Correcto</button>
+          <button class="opcion-btn" onclick="selOpcion(10,'mal',this)">❌ Incorrecto</button>
+          <button class="opcion-btn" onclick="selOpcion(10,'nc',this)">— N/C</button>
+        </div>
+        <input class="obs-input hidden" id="obs-10" placeholder="Observaciones...">
+      </div>
+
+      <div class="punto" id="punto-11">
+        <div class="punto-header">
+          <div class="punto-num">11</div>
+          <div class="punto-nom">Limpieza</div>
+        </div>
+        <div class="opciones">
+          <button class="opcion-btn" onclick="selOpcion(11,'ok',this)">✅ Correcto</button>
+          <button class="opcion-btn" onclick="selOpcion(11,'mal',this)">❌ Incorrecto</button>
+          <button class="opcion-btn" onclick="selOpcion(11,'nc',this)">— N/C</button>
+        </div>
+        <input class="obs-input hidden" id="obs-11" placeholder="Observaciones...">
+      </div>
+
+      <div class="punto" id="punto-12">
+        <div class="punto-header">
+          <div class="punto-num">12</div>
+          <div class="punto-nom">Pérdida de fluido</div>
+        </div>
+        <div class="opciones">
+          <button class="opcion-btn" onclick="selOpcion(12,'ok',this)">✅ Correcto</button>
+          <button class="opcion-btn" onclick="selOpcion(12,'mal',this)">❌ Incorrecto</button>
+          <button class="opcion-btn" onclick="selOpcion(12,'nc',this)">— N/C</button>
+        </div>
+        <input class="obs-input hidden" id="obs-12" placeholder="Observaciones...">
+      </div>
+
+      <div class="punto" id="punto-13">
+        <div class="punto-header">
+          <div class="punto-num">13</div>
+          <div class="punto-nom">Uniones</div>
+        </div>
+        <div class="opciones">
+          <button class="opcion-btn" onclick="selOpcion(13,'ok',this)">✅ Correcto</button>
+          <button class="opcion-btn" onclick="selOpcion(13,'mal',this)">❌ Incorrecto</button>
+          <button class="opcion-btn" onclick="selOpcion(13,'nc',this)">— N/C</button>
+        </div>
+        <input class="obs-input hidden" id="obs-13" placeholder="Observaciones...">
+      </div>
+
+      <div class="punto" id="punto-14">
+        <div class="punto-header">
+          <div class="punto-num">14</div>
+          <div class="punto-nom">Otro</div>
+        </div>
+        <div class="opciones">
+          <button class="opcion-btn" onclick="selOpcion(14,'ok',this)">✅ Correcto</button>
+          <button class="opcion-btn" onclick="selOpcion(14,'mal',this)">❌ Incorrecto</button>
+          <button class="opcion-btn" onclick="selOpcion(14,'nc',this)">— N/C</button>
+        </div>
+        <input class="obs-input hidden" id="obs-14" placeholder="Observaciones...">
+      </div>
+
+      <!-- Punto 15: Tipo de Energía -->
+      <div class="punto">
+        <div class="punto-header">
+          <div class="punto-num">15</div>
+          <div class="punto-nom">Tipo de Energía</div>
+        </div>
+        <div class="energia-grid">
+          <button class="energia-btn" onclick="selEnergia('Eléctrica',this)">⚡ Eléctrica</button>
+          <button class="energia-btn" onclick="selEnergia('Hidráulica',this)">💧 Hidráulica</button>
+          <button class="energia-btn" onclick="selEnergia('A explosión',this)">🔥 Explosión</button>
+          <button class="energia-btn" onclick="selEnergia('A batería',this)">🔋 Batería</button>
+          <button class="energia-btn" onclick="selEnergia('Neumática',this)" style="grid-column:span 2">💨 Neumática</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="card">
+      <div class="card-title">✍️ Firma del técnico</div>
+      <div class="fg">
+        <label>Controla</label>
+        <div class="info-box"><div class="val" id="p2-tecnico"></div></div>
+      </div>
+    </div>
+
+    <button class="btn-guardar" onclick="guardarControl()">✓ Finalizar y guardar control</button>
+    <button class="btn-nuevo" style="background:transparent;color:var(--azul2);border:1px solid var(--azul2);margin-top:8px" onclick="volverPaso1()">← Volver</button>
+  </div>
+
+  <!-- PASO 3: Resultado -->
+  <div id="paso3" class="hidden">
+    <div class="pasos">
+      <div class="paso-ind done">1. Herramienta</div>
+      <div class="paso-ind done">2. Inspección</div>
+      <div class="paso-ind active">3. Resultado</div>
+    </div>
+    <div class="card" style="text-align:center;padding:24px">
+      <div style="font-size:40px;margin-bottom:10px" id="res-ico">✅</div>
+      <div style="font-size:18px;font-weight:800;margin-bottom:4px" id="res-titulo">Control registrado</div>
+      <div style="font-size:13px;color:var(--txt2);margin-bottom:20px" id="res-detalle"></div>
+      <div class="resultado-grid">
+        <div class="res-card ok"><div class="num" id="cnt-ok">0</div><div class="lbl">CORRECTOS</div></div>
+        <div class="res-card mal"><div class="num" id="cnt-mal">0</div><div class="lbl">INCORRECTOS</div></div>
+        <div class="res-card nc"><div class="num" id="cnt-nc">0</div><div class="lbl">NO APLICA</div></div>
+      </div>
+    </div>
+    <button class="btn-pdf" onclick="generarPDF()">🖨️ Imprimir PDF del control</button>
+    <button class="btn-nuevo" onclick="nuevoControl()">+ Nuevo control</button>
+  </div>
+
+</div>
+
+</div>
+
+<!-- HISTORIAL HYS -->
+<div id="seccion-historial-hys" style="display:none">
+  <div style="padding:16px;max-width:600px;margin:0 auto">
+    <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:12px">
+      <h2 style="font-size:15px;font-weight:700;color:var(--azul)">Mis controles</h2>
+      <button id="btn-actualizar-hys" style="background:var(--fondo);border:1px solid var(--borde);border-radius:6px;padding:6px 12px;font-size:12px;font-weight:700;cursor:pointer;font-family:inherit">&#8635; Actualizar</button>
+    </div>
+    <div class="fg">
+      <label>Filtrar por obra</label>
+      <select id="fil-obra-hys">
+        <option value="">Todas las obras</option>
+      </select>
+    </div>
+    <div id="hys-hist-loading" style="text-align:center;padding:30px;color:var(--txt3)">
+      <div class="spinner"></div>
+      <div style="margin-top:8px">Cargando registros...</div>
+    </div>
+    <div id="hys-hist-content"></div>
+  </div>
+</div>
+
+<div class="toast-wrap" id="toasts"></div>
+
+<script>
+const APPS_SCRIPT_URL = "https://script.google.com/macros/s/AKfycbzJZWetOEG-Uc52df8ARFGpXKaFUBwuCzBfWpqf3Y8w7H91Q0CQeYmJNR3PC_oQk0f-/exec";
+
+// Estado
+let herActual = null;
+let tecnico = "";
+let fecha = "";
+let respuestas = {}; // {1: {valor:'ok', obs:''}, ...}
+let energiaSeleccionada = "";
+let controlGuardado = null;
+
+// Helpers
+const hoy = () => { const d=new Date(); return d.getFullYear()+"-"+(String(d.getMonth()+1).padStart(2,"0"))+"-"+(String(d.getDate()).padStart(2,"0")); };
+const uid = () => Date.now().toString(36).toUpperCase()+Math.random().toString(36).substring(2,5).toUpperCase();
+const fmtFecha = v => { if(!v)return"—"; if(v.includes("-")){const[y,m,d]=v.split("-");return d+"/"+m+"/"+y;} return v; };
+
+function toast(msg, tipo="ok") {
+  const w = document.getElementById("toasts");
+  const el = document.createElement("div");
+  el.className = "toast " + tipo;
+  el.textContent = msg;
+  w.appendChild(el);
+  setTimeout(() => el.remove(), 3500);
+}
+
+async function shGet(range) {
+  const r = await fetch(APPS_SCRIPT_URL + "?range=" + encodeURIComponent(range), {redirect:"follow",mode:"cors"});
+  const d = await r.json();
+  if (!d.ok) throw new Error(d.error || "Error");
+  return d.values || [];
+}
+
+async function shApp(sheet, values) {
+  const payload = encodeURIComponent(JSON.stringify({action:"append",sheet:sheet,values:values}));
+  const r = await fetch(APPS_SCRIPT_URL + "?payload=" + payload, {redirect:"follow",mode:"cors"});
+  const d = await r.json();
+  if (!d.ok) throw new Error(d.error || "Error");
+  return d;
+}
+
+async function shUpd(range, values) {
+  const payload = encodeURIComponent(JSON.stringify({action:"update",range:range,values:values}));
+  const r = await fetch(APPS_SCRIPT_URL + "?payload=" + payload, {redirect:"follow",mode:"cors"});
+  const d = await r.json();
+  if (!d.ok) throw new Error(d.error || "Error");
+  return d;
+}
+
+// Cargar dropdown al inicio
+async function cargarDropdown() {
+  try {
+    const rows = await shGet("Herramientas!A:X");
+    if (!rows.length) return;
+    const head = rows[0];
+    const data = rows.slice(1)
+      .filter(r => r[0] && r[0].toString().trim() !== "")
+      .map(r => Object.fromEntries(head.map((k,i) => [k,r[i]||""])))
+      .filter(h => h.Estado !== "Baja" && h.Estado !== "Devuelta a proveedor");
+    // Guardar herramientas en memoria
+    window._todasHer = data;
+    const sel = document.getElementById("sel-her-hys");
+    sel.innerHTML = '<option value="">— Seleccionar herramienta —</option>' +
+      data.map(h => `<option value="${h.Codigo}">${h.Codigo} — ${h.Descripcion}${h.Marca?" ("+h.Marca+")":""}</option>`).join("");
+    toast("Herramientas cargadas: " + data.length);
+  } catch(e) {
+    const sel = document.getElementById("sel-her-hys");
+    sel.innerHTML = '<option value="">Error al cargar — usá el código manual</option>';
+    console.error(e);
+  }
+}
+
+function seleccionarDeDropdown(codigo) {
+  if (!codigo) return;
+  const her = (window._todasHer||[]).find(h => h.Codigo === codigo);
+  if (!her) return;
+  herActual = her;
+  document.getElementById("res-desc").textContent = her.Descripcion || "—";
+  document.getElementById("res-marca").textContent = her.Marca || "—";
+  document.getElementById("res-modelo").textContent = her.Modelo || "—";
+  document.getElementById("res-serie").textContent = her.NroSerie || "—";
+  document.getElementById("res-ubic").textContent = her.NodoActual || "—";
+  document.getElementById("inp-fecha").value = hoy();
+  document.getElementById("inp-codigo").value = codigo;
+  const catMap = {"Eléctrica":"Eléctrica","A batería":"A batería","A explosión":"A explosión","Soldadora":"Eléctrica"};
+  energiaSeleccionada = catMap[her.Categoria] || "";
+  document.getElementById("her-loading").classList.add("hidden");
+  document.getElementById("her-result").classList.remove("hidden");
+}
+
+// Buscar herramienta
+async function buscarHer() {
+  const cod = document.getElementById("inp-codigo").value.trim().toUpperCase();
+  if (!cod) { toast("Ingresá el código de la herramienta","err"); return; }
+  document.getElementById("her-result").classList.add("hidden");
+  document.getElementById("her-loading").classList.remove("hidden");
+  try {
+    const rows = await shGet("Herramientas!A:X");
+    if (!rows.length) throw new Error("Sin datos");
+    const head = rows[0];
+    const data = rows.slice(1).map(r => Object.fromEntries(head.map((k,i) => [k,r[i]||""])));
+    const her = data.find(h => h.Codigo === cod);
+    if (!her) { toast("Herramienta no encontrada: " + cod, "err"); document.getElementById("her-loading").classList.add("hidden"); return; }
+    herActual = her;
+    document.getElementById("res-desc").textContent = her.Descripcion || "—";
+    document.getElementById("res-marca").textContent = her.Marca || "—";
+    document.getElementById("res-modelo").textContent = her.Modelo || "—";
+    document.getElementById("res-serie").textContent = her.NroSerie || "—";
+    document.getElementById("res-ubic").textContent = her.NodoActual || "—";
+    document.getElementById("inp-fecha").value = hoy();
+    // Preseleccionar tipo de energía según categoría
+    const catMap = {"Eléctrica":"Eléctrica","A batería":"A batería","A explosión":"A explosión","Soldadora":"Eléctrica"};
+    energiaSeleccionada = catMap[her.Categoria] || "";
+    document.getElementById("her-loading").classList.add("hidden");
+    document.getElementById("her-result").classList.remove("hidden");
+    toast("Herramienta encontrada: " + her.Descripcion);
+  } catch(e) {
+    document.getElementById("her-loading").classList.add("hidden");
+    toast("Error: " + e.message, "err");
+  }
+}
+
+// También buscar al presionar Enter
+document.getElementById("inp-codigo").addEventListener("keydown", e => { if(e.key==="Enter") buscarHer(); });
+
+// Cargar dropdown al inicio
+cargarDropdown();
+
+// ── TABS HYS ─────────────────────────────────────────────────
+document.getElementById("tab-inspeccion").addEventListener("click", function() {
+  document.getElementById("seccion-inspeccion").style.display = "block";
+  document.getElementById("seccion-historial-hys").style.display = "none";
+  this.style.background = "rgba(255,255,255,.15)";
+  this.style.color = "#fff";
+  this.style.borderBottomColor = "#fff";
+  var th = document.getElementById("tab-historial");
+  th.style.background = "none";
+  th.style.color = "rgba(255,255,255,.6)";
+  th.style.borderBottomColor = "transparent";
+});
+
+document.getElementById("tab-historial").addEventListener("click", function() {
+  document.getElementById("seccion-inspeccion").style.display = "none";
+  document.getElementById("seccion-historial-hys").style.display = "block";
+  this.style.background = "rgba(255,255,255,.15)";
+  this.style.color = "#fff";
+  this.style.borderBottomColor = "#fff";
+  var ti = document.getElementById("tab-inspeccion");
+  ti.style.background = "none";
+  ti.style.color = "rgba(255,255,255,.6)";
+  ti.style.borderBottomColor = "transparent";
+  cargarHistorialHyS();
+});
+
+document.getElementById("btn-actualizar-hys").addEventListener("click", cargarHistorialHyS);
+
+document.getElementById("fil-obra-hys").addEventListener("change", function() {
+  filtrarHistorialHyS(this.value);
+});
+
+var todosControles = [];
+
+async function cargarHistorialHyS() {
+  var loading = document.getElementById("hys-hist-loading");
+  var histContent = document.getElementById("hys-hist-content");
+  loading.style.display = "block";
+  histContent.innerHTML = "";
+  try {
+    var rows = await shGet("ControlHyS!A:L");
+    loading.style.display = "none";
+    if (rows.length <= 1) {
+      histContent.innerHTML = '<div style="text-align:center;padding:30px;color:var(--txt3)"><div style="font-size:32px;margin-bottom:8px">&#128203;</div>Sin controles registrados</div>';
+      return;
+    }
+    var head = rows[0];
+    todosControles = rows.slice(1)
+      .filter(function(r){ return r[0] && r[0].toString().trim() !== ""; })
+      .map(function(r){ return Object.fromEntries(head.map(function(k,i){ return [k, r[i]||""]; })); })
+      .reverse();
+
+    // Poblar filtro de obras
+    var obras = [...new Set(todosControles.map(function(c){ return c.Obra || c.NodoActual || ""; }).filter(Boolean))];
+    var selObra = document.getElementById("fil-obra-hys");
+    selObra.innerHTML = '<option value="">Todas las obras</option>' +
+      obras.map(function(o){ return '<option value="' + o + '">' + o + '</option>'; }).join("");
+
+    renderControles(todosControles);
+  } catch(e) {
+    loading.style.display = "none";
+    histContent.innerHTML = '<div style="text-align:center;padding:20px;color:var(--rojo)">Error: ' + e.message + '</div>';
+  }
+}
+
+function filtrarHistorialHyS(obra) {
+  var filtrados = obra ? todosControles.filter(function(c){ return (c.Obra||c.NodoActual||"") === obra; }) : todosControles;
+  renderControles(filtrados);
+}
+
+function renderControles(lista) {
+  var histContent = document.getElementById("hys-hist-content");
+  if (!lista.length) {
+    histContent.innerHTML = '<div style="text-align:center;padding:30px;color:var(--txt3)">Sin controles para esta obra</div>';
+    return;
+  }
+  histContent.innerHTML = lista.slice(0, 30).map(function(c, i) {
+    var fecha = c.Fecha || "—";
+    if (fecha && fecha.includes("T")) {
+      var d = new Date(fecha);
+      fecha = (String(d.getDate()).padStart(2,"0")) + "/" + (String(d.getMonth()+1).padStart(2,"0")) + "/" + d.getFullYear();
+    } else if (fecha && fecha.includes("-")) {
+      var p = fecha.split("-"); fecha = p[2]+"/"+p[1]+"/"+p[0];
+    }
+    var estado = c.EstadoSeguridad || "—";
+    var badgeCls = estado === "Conforme" ? "conf" : estado === "Fuera de servicio" ? "fs" : "obs";
+    var tecnico = c.TecnicoHyS || c.Responsable || "—";
+    var obra = c.Obra || c.NodoActual || "—";
+    return '<div class="hys-card">' +
+      '<div class="hc-top">' +
+        '<div class="hc-cod">' + (c.CodigoHerramienta||"—") + '</div>' +
+        '<div class="hc-fecha">' + fecha + '</div>' +
+      '</div>' +
+      '<div class="hc-desc">' + (c.Descripcion||"—") + '</div>' +
+      '<div class="hc-obra">&#127961; ' + obra + ' &nbsp;&#183;&nbsp; &#128100; ' + tecnico + '</div>' +
+      '<span class="hys-badge ' + badgeCls + '">' + estado + '</span>' +
+      '<br><button class="btn-pdf-small" onclick="imprimirControlHyS(' + i + ')">&#128247; Imprimir PDF</button>' +
+    '</div>';
+  }).join("");
+}
+
+function imprimirControlHyS(idx) {
+  var c = todosControles[idx];
+  if (!c) return;
+  var puntos = [];
+  try { puntos = JSON.parse(c.Observaciones || c.PuntosControl || "[]"); } catch(e) { puntos = []; }
+  var estadoColor = c.EstadoSeguridad === "Conforme" ? "#16A34A" : "#DC2626";
+  var estadoTxt = c.EstadoSeguridad === "Conforme" ? "CONFORME" : "CON OBSERVACIONES";
+  var fecha = c.Fecha || "—";
+  if (fecha && fecha.includes("T")) { var d = new Date(fecha); fecha = d.toLocaleDateString("es-AR"); }
+  else if (fecha && fecha.includes("-")) { var p = fecha.split("-"); fecha = p[2]+"/"+p[1]+"/"+p[0]; }
+
+  var PUNTOS_NOMBRES = ["Carcasa / Cuerpo","Ficha Tomacorriente / Bateria","Cable aislado","Mandos / Accionamiento","Mango","Sistema Hombre Muerto","Empunadura","Resguardo / Proteccion","Funcionalidad","Llave de ajuste","Limpieza","Perdida de fluido","Uniones","Otro"];
+
+  var filasPuntos = puntos.length ? puntos.map(function(p) {
+    var nom = PUNTOS_NOMBRES[p.num-1] || "Punto " + p.num;
+    return "<tr><td style='padding:5px 8px;border:1px solid #CBD5E1'>" + p.num + ". " + nom + "</td>" +
+      "<td style='padding:5px 8px;border:1px solid #CBD5E1;text-align:center;color:#16A34A;font-size:14pt'>" + (p.valor==="ok"?"&#10003;":"") + "</td>" +
+      "<td style='padding:5px 8px;border:1px solid #CBD5E1;text-align:center;color:#DC2626;font-size:14pt'>" + (p.valor==="mal"?"&#10007;":"") + "</td>" +
+      "<td style='padding:5px 8px;border:1px solid #CBD5E1;text-align:center;color:#94A3B8'>" + (p.valor==="nc"?"&mdash;":"") + "</td>" +
+      "<td style='padding:5px 8px;border:1px solid #CBD5E1;font-size:9pt'>" + (p.obs||"") + "</td></tr>";
+  }).join("") : "<tr><td colspan='5' style='padding:10px;text-align:center;color:#94A3B8'>Checklist no disponible</td></tr>";
+
+  var html = "<!DOCTYPE html><html><head><meta charset='UTF-8'><title>Control HyS</title>" +
+    "<style>body{font-family:Arial,sans-serif;font-size:11pt;color:#1A3A5C;margin:1.5cm;}" +
+    ".header{display:flex;justify-content:space-between;border-bottom:3px solid #C0102E;padding-bottom:10px;margin-bottom:16px;}" +
+    ".logo{font-size:22px;font-weight:900;letter-spacing:2px;}" +
+    ".datos{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;background:#F1F5F9;padding:10px;border-radius:6px;margin-bottom:14px;}" +
+    ".dato .lbl{font-size:8pt;color:#64748B;font-weight:700;text-transform:uppercase;}" +
+    ".dato .val{font-weight:700;}" +
+    "table{width:100%;border-collapse:collapse;margin-bottom:12px;}" +
+    "th{background:#1A3A5C;color:#fff;padding:7px 8px;text-align:left;}" +
+    ".estado-box{border:2px solid " + estadoColor + ";border-radius:6px;padding:10px 14px;margin:12px 0;}" +
+    ".estado-txt{font-size:13pt;font-weight:800;color:" + estadoColor + ";}" +
+    ".firma{margin-top:30px;border-top:1px solid #1A3A5C;padding-top:8px;width:200px;}" +
+    ".pie{text-align:center;font-size:8pt;color:#94A3B8;margin-top:16px;border-top:1px solid #E2E8F0;padding-top:8px;}" +
+    "@media print{body{margin:1cm;}}</style></head><body>" +
+    "<div class='header'><div><div class='logo'>ISL</div><div style='font-size:9px;color:#475569'>Instrumental San Lorenzo S.R.L.</div></div>" +
+    "<div style='text-align:right'><div style='font-weight:700'>INSPECCION DE EQUIPOS Y MAQUINAS</div><div style='font-size:9pt;color:#475569'>" + fecha + "</div></div></div>" +
+    "<div class='datos'>" +
+    "<div class='dato'><div class='lbl'>Equipo</div><div class='val'>" + (c.Descripcion||"—") + "</div></div>" +
+    "<div class='dato'><div class='lbl'>Codigo ISL</div><div class='val'>" + (c.CodigoHerramienta||"—") + "</div></div>" +
+    "<div class='dato'><div class='lbl'>Ubicacion</div><div class='val'>" + (c.Obra||c.NodoActual||"—") + "</div></div>" +
+    "<div class='dato'><div class='lbl'>Tecnico H&S</div><div class='val'>" + (c.TecnicoHyS||c.Responsable||"—") + "</div></div>" +
+    "<div class='dato'><div class='lbl'>Fecha</div><div class='val'>" + fecha + "</div></div>" +
+    "</div>" +
+    "<table><tr><th style='width:40%'>Puntos de Control</th><th style='width:12%;text-align:center'>Correcto</th><th style='width:12%;text-align:center'>Incorrecto</th><th style='width:12%;text-align:center'>N/C</th><th>Observaciones</th></tr>" +
+    filasPuntos + "</table>" +
+    "<div class='estado-box'><div class='estado-txt'>" + estadoTxt + "</div></div>" +
+    "<div class='firma'><div style='font-weight:700'>" + (c.TecnicoHyS||c.Responsable||"—") + "</div><div style='font-size:9pt;color:#64748B'>Tecnico H&S</div></div>" +
+    "<div class='pie'>Instrumental San Lorenzo S.R.L. &middot; Control H&S &middot; " + (c.CodigoHerramienta||"") + " &middot; " + fecha + "</div>" +
+    "<script>window.onload=()=>window.print();<\/script></body></html>";
+
+  var win = window.open("","_blank");
+  win.document.write(html);
+  win.document.close();
+}
+
+// ── LECTOR QR HyS ──────────────────────────────────────────
+var hysQrCode = null;
+var hysQrActivo = false;
+
+document.getElementById("btn-qr-hys").addEventListener("click", function() {
+  if (!hysQrActivo) {
+    iniciarQRHyS();
+  } else {
+    detenerQRHyS();
+  }
+});
+
+function iniciarQRHyS() {
+  var btn = document.getElementById("btn-qr-hys");
+  var reader = document.getElementById("qr-reader-hys");
+  reader.classList.remove("hidden");
+  document.getElementById("qr-res-hys").classList.add("hidden");
+  btn.className = "btn-qr activo";
+  btn.innerHTML = "&#9209; Detener camara";
+  hysQrActivo = true;
+
+  hysQrCode = new Html5Qrcode("qr-reader-hys");
+  hysQrCode.start(
+    { facingMode: "environment" },
+    { fps: 10, qrbox: { width: 250, height: 250 } },
+    function(decodedText) {
+      var codigo = decodedText.split(" | ")[0].trim().toUpperCase();
+      detenerQRHyS();
+      document.getElementById("inp-codigo").value = codigo;
+      document.getElementById("qr-res-hys").textContent = "QR leido: " + codigo;
+      document.getElementById("qr-res-hys").classList.remove("hidden");
+      // Buscar en el dropdown
+      var sel = document.getElementById("sel-her-hys");
+      if (sel) sel.value = codigo;
+      seleccionarDeDropdown(codigo);
+      if (!herActual) buscarHer();
+    },
+    function(error) {}
+  ).catch(function(err) {
+    toast("No se pudo acceder a la camara: " + err, "err");
+    detenerQRHyS();
+  });
+}
+
+function detenerQRHyS() {
+  var btn = document.getElementById("btn-qr-hys");
+  var reader = document.getElementById("qr-reader-hys");
+  btn.className = "btn-qr";
+  btn.innerHTML = "&#128247; Abrir camara para escanear QR";
+  hysQrActivo = false;
+  if (hysQrCode) {
+    hysQrCode.stop().then(function() {
+      hysQrCode.clear();
+      reader.classList.add("hidden");
+    }).catch(function() {
+      reader.classList.add("hidden");
+    });
+  }
+}
+
+function irPaso2() {
+  tecnico = document.getElementById("inp-tecnico").value.trim();
+  fecha = document.getElementById("inp-fecha").value;
+  if (!tecnico) { toast("Ingresá el nombre del técnico","err"); return; }
+  if (!fecha) { toast("Ingresá la fecha","err"); return; }
+  respuestas = {};
+  energiaSeleccionada = energiaSeleccionada || "";
+  // Resetear UI
+  document.querySelectorAll(".opcion-btn").forEach(b => { b.className = "opcion-btn"; });
+  document.querySelectorAll(".obs-input").forEach(i => { i.classList.add("hidden"); i.value=""; });
+  document.querySelectorAll(".energia-btn").forEach(b => b.classList.remove("sel"));
+  // Info en paso 2
+  document.getElementById("p2-codigo").textContent = herActual.Codigo;
+  document.getElementById("p2-desc").textContent = herActual.Descripcion;
+  document.getElementById("p2-detalle").textContent = (herActual.Marca||"") + (herActual.Modelo?" · "+herActual.Modelo:"") + " · N°Serie: " + (herActual.NroSerie||"—");
+  document.getElementById("p2-tecnico").textContent = tecnico;
+  // Preseleccionar energía si ya se detectó
+  if (energiaSeleccionada) {
+    document.querySelectorAll(".energia-btn").forEach(b => {
+      if (b.textContent.includes(energiaSeleccionada) || energiaSeleccionada.includes(b.textContent.trim().split(" ").pop())) {
+        b.classList.add("sel");
+      }
+    });
+  }
+  document.getElementById("paso1").classList.add("hidden");
+  document.getElementById("paso2").classList.remove("hidden");
+  window.scrollTo(0,0);
+}
+
+function selOpcion(num, valor, btn) {
+  // Deseleccionar otros botones del mismo punto
+  btn.closest(".opciones").querySelectorAll(".opcion-btn").forEach(b => b.className = "opcion-btn");
+  btn.className = "opcion-btn " + valor;
+  respuestas[num] = respuestas[num] || {};
+  respuestas[num].valor = valor;
+  // Mostrar campo de observaciones si es incorrecto
+  const obsEl = document.getElementById("obs-" + num);
+  if (valor === "mal") {
+    obsEl.classList.remove("hidden");
+  } else {
+    obsEl.classList.add("hidden");
+    obsEl.value = "";
+  }
+}
+
+function selEnergia(tipo, btn) {
+  document.querySelectorAll(".energia-btn").forEach(b => b.classList.remove("sel"));
+  btn.classList.add("sel");
+  energiaSeleccionada = tipo;
+}
+
+function volverPaso1() {
+  document.getElementById("paso2").classList.add("hidden");
+  document.getElementById("paso1").classList.remove("hidden");
+  window.scrollTo(0,0);
+}
+
+async function guardarControl() {
+  if (!energiaSeleccionada) { toast("Seleccioná el tipo de energía","err"); return; }
+  // Contar respuestas
+  let cntOk=0, cntMal=0, cntNc=0;
+  const puntosData = [];
+  for (let i=1; i<=14; i++) {
+    const r = respuestas[i] || {};
+    const val = r.valor || "";
+    const obs = document.getElementById("obs-"+i)?.value || "";
+    if (val==="ok") cntOk++;
+    else if (val==="mal") cntMal++;
+    else cntNc++;
+    puntosData.push({num:i, valor:val, obs:obs});
+  }
+  const estadoGeneral = cntMal > 0 ? "Con observaciones" : "Conforme";
+  // Guardar en ControlHyS
+  const id = uid();
+  const row = [
+    id, fecha, herActual.NodoActual||"", tecnico,
+    herActual.Codigo, herActual.Descripcion,
+    "SI", estadoGeneral,
+    // Puntos 1-14 como JSON
+    JSON.stringify(puntosData),
+    energiaSeleccionada,
+    // Resumen
+    cntOk + " correctos, " + cntMal + " incorrectos, " + cntNc + " N/C",
+    "SI"
+  ];
+  try {
+    await shApp("ControlHyS", [row]);
+    // Guardar para el PDF
+    controlGuardado = {
+      id, fecha, tecnico,
+      her: herActual,
+      puntos: puntosData,
+      energia: energiaSeleccionada,
+      cntOk, cntMal, cntNc,
+      estadoGeneral
+    };
+    // Mostrar resultado
+    document.getElementById("cnt-ok").textContent = cntOk;
+    document.getElementById("cnt-mal").textContent = cntMal;
+    document.getElementById("cnt-nc").textContent = cntNc;
+    document.getElementById("res-ico").textContent = cntMal > 0 ? "⚠️" : "✅";
+    document.getElementById("res-titulo").textContent = cntMal > 0 ? "Control con observaciones" : "Control conforme";
+    document.getElementById("res-detalle").textContent = herActual.Codigo + " — " + herActual.Descripcion + " · " + fmtFecha(fecha);
+    document.getElementById("paso2").classList.add("hidden");
+    document.getElementById("paso3").classList.remove("hidden");
+    window.scrollTo(0,0);
+    toast("✓ Control registrado correctamente");
+  } catch(e) {
+    toast("Error al guardar: " + e.message, "err");
+  }
+}
+
+function nuevoControl() {
+  herActual = null; tecnico = ""; fecha = ""; respuestas = {}; energiaSeleccionada = ""; controlGuardado = null;
+  document.getElementById("inp-codigo").value = "";
+  document.getElementById("inp-tecnico").value = "";
+  document.getElementById("her-result").classList.add("hidden");
+  document.getElementById("paso3").classList.add("hidden");
+  document.getElementById("paso1").classList.remove("hidden");
+  window.scrollTo(0,0);
+}
+
+const PUNTOS_NOMBRES = [
+  "Carcasa / Cuerpo","Ficha Tomacorriente / Batería","Cable aislado",
+  "Mandos / Accionamiento","Mango","Sistema Hombre Muerto","Empuñadura",
+  "Resguardo / Protección","Funcionalidad","Llave de ajuste","Limpieza",
+  "Pérdida de fluido","Uniones","Otro"
+];
+
+function generarPDF() {
+  if (!controlGuardado) { toast("Sin datos para imprimir","err"); return; }
+  const c = controlGuardado;
+  const filasPuntos = c.puntos.map(p => {
+    const nom = PUNTOS_NOMBRES[p.num-1] || "Punto " + p.num;
+    const ok  = p.valor==="ok"  ? "✓" : "";
+    const mal = p.valor==="mal" ? "✗" : "";
+    const nc  = p.valor==="nc"  ? "—" : "";
+    return `<tr>
+      <td style="padding:5px 8px;border:1px solid #CBD5E1;font-size:10pt">${p.num}. ${nom}</td>
+      <td style="padding:5px 8px;border:1px solid #CBD5E1;text-align:center;font-size:14pt;color:#16A34A">${ok}</td>
+      <td style="padding:5px 8px;border:1px solid #CBD5E1;text-align:center;font-size:14pt;color:#DC2626">${mal}</td>
+      <td style="padding:5px 8px;border:1px solid #CBD5E1;text-align:center;color:#94A3B8">${nc}</td>
+      <td style="padding:5px 8px;border:1px solid #CBD5E1;font-size:9pt;color:#475569">${p.obs||""}</td>
+    </tr>`;
+  }).join("");
+
+  const estadoColor = c.cntMal > 0 ? "#DC2626" : "#16A34A";
+  const estadoTxt = c.cntMal > 0 ? "⚠ CON OBSERVACIONES" : "✅ CONFORME";
+
+  const html = `<!DOCTYPE html><html lang="es"><head><meta charset="UTF-8">
+  <title>Control H&S — ${c.her.Codigo}</title>
+  <style>
+    body{font-family:Arial,sans-serif;font-size:11pt;color:#1A3A5C;margin:1.5cm;}
+    .header{display:flex;justify-content:space-between;align-items:flex-start;border-bottom:3px solid #C0102E;padding-bottom:10px;margin-bottom:16px;}
+    .logo-txt{font-size:22px;font-weight:900;color:#1A3A5C;letter-spacing:2px;}
+    .logo-sub{font-size:9px;color:#475569;}
+    h1{font-size:13pt;text-align:center;margin:0 0 14px;color:#1A3A5C;letter-spacing:1px;}
+    .datos{display:grid;grid-template-columns:1fr 1fr 1fr;gap:6px;background:#F1F5F9;border-radius:6px;padding:10px;margin-bottom:14px;}
+    .dato .lbl{font-size:8pt;color:#64748B;font-weight:700;text-transform:uppercase;}
+    .dato .val{font-weight:700;color:#0F172A;font-size:11pt;}
+    table{width:100%;border-collapse:collapse;margin-bottom:12px;}
+    th{background:#1A3A5C;color:#fff;padding:7px 8px;text-align:left;font-size:10pt;}
+    .energia-row{background:#F1F5F9;}
+    .estado-box{border:2px solid ${estadoColor};border-radius:6px;padding:10px 14px;margin:12px 0;display:flex;justify-content:space-between;align-items:center;}
+    .estado-txt{font-size:13pt;font-weight:800;color:${estadoColor};}
+    .resumen{font-size:10pt;color:#475569;}
+    .firma-box{margin-top:30px;border-top:1px solid #1A3A5C;padding-top:8px;width:200px;}
+    .firma-nom{font-weight:700;font-size:11pt;}
+    .firma-lbl{font-size:9pt;color:#64748B;}
+    .pie{text-align:center;font-size:8pt;color:#94A3B8;margin-top:16px;border-top:1px solid #E2E8F0;padding-top:8px;}
+    @media print{body{margin:1cm;}}
+.hys-card{background:var(--card);border:1px solid var(--borde);border-radius:10px;padding:14px;margin-bottom:10px;}
+.hys-card .hc-top{display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:6px;}
+.hys-card .hc-cod{font-size:14px;font-weight:800;color:var(--azul);}
+.hys-card .hc-fecha{font-size:11px;color:var(--txt3);}
+.hys-card .hc-desc{font-size:12px;color:var(--txt2);margin-bottom:6px;}
+.hys-card .hc-obra{font-size:11px;color:var(--txt3);margin-bottom:6px;}
+.hys-badge{display:inline-block;padding:3px 9px;border-radius:10px;font-size:11px;font-weight:700;}
+.hys-badge.conf{background:var(--verdebg);color:var(--verde);}
+.hys-badge.obs{background:#FEF3C7;color:var(--amber);}
+.hys-badge.fs{background:var(--rojobg);color:var(--rojo);}
+.btn-pdf-small{background:var(--azul);color:#fff;border:none;border-radius:6px;padding:6px 12px;font-size:11px;font-weight:700;cursor:pointer;margin-top:8px;}
+  </style></head><body>
+  <div class="header">
+    <div><div class="logo-txt">ISL</div><div class="logo-sub">Instrumental San Lorenzo S.R.L.</div></div>
+    <div style="text-align:right"><div style="font-size:11pt;font-weight:700">INSPECCIÓN DE EQUIPOS Y MAQUINAS</div><div style="font-size:9pt;color:#475569">${fmtFecha(c.fecha)}</div></div>
+  </div>
+  <div class="datos">
+    <div class="dato"><div class="lbl">Equipo / Máquina</div><div class="val">${c.her.Descripcion}</div></div>
+    <div class="dato"><div class="lbl">Marca / Modelo</div><div class="val">${c.her.Marca||"—"} ${c.her.Modelo||""}</div></div>
+    <div class="dato"><div class="lbl">Código ISL</div><div class="val">${c.her.Codigo}</div></div>
+    <div class="dato"><div class="lbl">N° Serie</div><div class="val">${c.her.NroSerie||"—"}</div></div>
+    <div class="dato"><div class="lbl">Ubicación</div><div class="val">${c.her.NodoActual||"—"}</div></div>
+    <div class="dato"><div class="lbl">Técnico H&S</div><div class="val">${c.tecnico}</div></div>
+  </div>
+  <table>
+    <tr>
+      <th style="width:40%">Puntos de Control</th>
+      <th style="width:12%;text-align:center">Correcto</th>
+      <th style="width:12%;text-align:center">Incorrecto</th>
+      <th style="width:12%;text-align:center">N/C</th>
+      <th>Observaciones</th>
+    </tr>
+    ${filasPuntos}
+    <tr class="energia-row">
+      <td style="padding:5px 8px;border:1px solid #CBD5E1;font-weight:700">15. Tipo de Energía</td>
+      <td colspan="4" style="padding:5px 8px;border:1px solid #CBD5E1;font-weight:700;color:#2563A8">${c.energia}</td>
+    </tr>
+  </table>
+  <div class="estado-box">
+    <div class="estado-txt">${estadoTxt}</div>
+    <div class="resumen">${c.cntOk} correctos · ${c.cntMal} incorrectos · ${c.cntNc} no aplica</div>
+  </div>
+  <div class="firma-box">
+    <div class="firma-nom">${c.tecnico}</div>
+    <div class="firma-lbl">Técnico H&S — Controla</div>
+  </div>
+  <div class="pie">Instrumental San Lorenzo S.R.L. · Control H&S · ${c.her.Codigo} · ${fmtFecha(c.fecha)}</div>
+  <script>window.onload=()=>window.print();<\/script>
+  </body></html>`;
+
+  const win = window.open("","_blank");
+  win.document.write(html);
+  win.document.close();
+}
+</script>
+</body>
+</html>
